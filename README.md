@@ -339,12 +339,6 @@ See `GUROBI_ILP_INTEGRATION.md` for complete formulation details.
 
 This project is for academic/research purposes. Please ensure compliance with your institution's policies.
 
-## 👤 Author
-
-**Swathi Saravanan**
-
-- GitHub: [@swathisaravananan](https://github.com/swathisaravananan)
-
 ## 🙏 Acknowledgments
 
 - Gurobi Optimization for the ILP solver
