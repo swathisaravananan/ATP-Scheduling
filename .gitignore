@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Sensitive files - DO NOT COMMIT
+keys/
+*.json
+!timetables/*.json  # Allow timetable JSON files
+
+# Output/Result files
+*.csv
+!dummy_input.csv  # Keep sample input if needed
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+venv/
+env/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Gurobi license (if present)
+gurobi.lic
+
