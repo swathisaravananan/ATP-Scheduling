@@ -4,6 +4,18 @@ from utils.group_exams import group_exam_timings, get_room_requirements
 from utils.liv25_api import LIV25API, search_rooms_for_exams
 from utils.access_google_sheets import get_sheet_as_df, update_sheet_with_df_with_columns
 
+def _get_client(creds_json_path="keys/atp-poc1-4e72f50119bc.json"):
+    """Helper to get Google Sheets client."""
+    import gspread
+    from oauth2client.service_account import ServiceAccountCredentials
+    scope = [
+        "https://spreadsheets.google.com/feeds",
+        "https://www.googleapis.com/auth/drive"
+    ]
+    creds = ServiceAccountCredentials.from_json_keyfile_name(creds_json_path, scope)
+    client = gspread.authorize(creds)
+    return client
+
 # Optional Gurobi import
 try:
     from utils.gurobi_room_optimizer import build_and_solve_ilp, apply_ilp_assignments_to_dataframe
@@ -385,17 +397,61 @@ class Pipeline2:
                 df_to_update = df_to_update.drop(columns=[col])
         
         # Ensure 'Status' column exists (alias for Room Assignment Status for clarity)
+        # Fill Status from Room Assignment Status, handling empty/null values
         if 'Room Assignment Status' in df_to_update.columns:
-            df_to_update['Status'] = df_to_update['Room Assignment Status']
+            # Fill Status column, using Room Assignment Status, or empty string if null/empty
+            df_to_update['Status'] = df_to_update['Room Assignment Status'].fillna('').astype(str)
+            # Replace empty strings with a default message if needed
+            df_to_update.loc[df_to_update['Status'] == '', 'Status'] = 'Not processed'
         else:
-            df_to_update['Status'] = ''
+            df_to_update['Status'] = 'Not processed'
         
         # Use key columns for updating (assuming Student ID and CRN are unique identifiers)
         key_columns = ['Student ID', 'CRN', 'Scheduled Start']
         print(f"Updating {sheet_name} sheet in {file_name} with room assignments...")
         removed_count = sum(1 for col in columns_to_remove if col in df.columns)
         print(f"  (Removed {removed_count} columns)")
-        update_sheet_with_df_with_columns(file_name, sheet_name, df_to_update, key_columns)
+        
+        # Update sheet with special handling to ensure Status is always populated
+        client = _get_client()
+        sheet = client.open(file_name).worksheet(sheet_name)
+        
+        # Read existing sheet
+        existing_df = pd.DataFrame(sheet.get_all_records())
+        
+        # If sheet is empty, write the new df entirely
+        if existing_df.empty:
+            sheet.clear()
+            # Convert DataFrame to list of lists, handling NaN values
+            values = []
+            for row in df_to_update.values.tolist():
+                values.append([str(v) if pd.notna(v) else '' for v in row])
+            sheet.update([df_to_update.columns.tolist()] + values)
+        else:
+            # Merge logic – treat key columns as a composite primary key
+            merged_df = existing_df.set_index(key_columns).combine_first(
+                df_to_update.set_index(key_columns)
+            ).reset_index()
+            
+            # CRITICAL FIX: Ensure Status column is always populated from Room Assignment Status
+            # Even if Status exists in existing data, update it from Room Assignment Status
+            if 'Room Assignment Status' in merged_df.columns:
+                # Update Status from Room Assignment Status for all rows
+                merged_df['Status'] = merged_df['Room Assignment Status'].fillna('').astype(str)
+                # Replace empty strings
+                merged_df.loc[merged_df['Status'] == '', 'Status'] = 'Not processed'
+            elif 'Status' not in merged_df.columns:
+                merged_df['Status'] = 'Not processed'
+            
+            # Convert DataFrame to list of lists, handling NaN values
+            values = []
+            for row in merged_df.values.tolist():
+                values.append([str(v) if pd.notna(v) else '' for v in row])
+            
+            # Update entire sheet
+            sheet.clear()
+            sheet.update([merged_df.columns.tolist()] + values)
+        
         print(f"Successfully updated {sheet_name} sheet")
         
         # Report unassigned students
