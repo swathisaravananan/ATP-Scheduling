@@ -8,10 +8,10 @@ from service.pipeline2 import Pipeline2
 from utils.mock_liv25_data import create_sample_mock_rooms
 import pandas as pd
 
-# Step 1: Create mock room data
-print("Creating mock room data...")
-mock_rooms = create_sample_mock_rooms()
-print(f"Created {len(mock_rooms)} mock rooms")
+# Step 1: Create mock room data with real room names
+print("Creating mock room data with real room names...")
+mock_rooms = create_sample_mock_rooms(use_real_room_names=True)
+print(f"Created {len(mock_rooms)} rooms using real room names")
 print("\nSample rooms:")
 print(mock_rooms.head())
 

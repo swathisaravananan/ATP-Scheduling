@@ -23,11 +23,12 @@ exam_groups = group_exam_timings(exam_df)
 print(f"Grouped into {len(exam_groups)} exam time slots")
 
 print("\nCreating mock room data tailored to exam times...")
-# Generate rooms that match the exam time slots
+# Generate rooms that match the exam time slots (using real room names)
 mock_rooms = generate_mock_rooms_for_exams(
     exam_groups=exam_groups,
     num_rooms_per_slot=3,  # 3 rooms per time slot
-    capacity_range=(10, 30)  # Rooms with 10-30 capacity
+    capacity_range=(10, 30),  # Rooms with 10-30 capacity
+    use_real_room_names=True  # Use real room names
 )
 print(f"Generated {len(mock_rooms)} mock rooms")
 
