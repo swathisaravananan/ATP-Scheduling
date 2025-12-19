@@ -387,6 +387,8 @@ def apply_ilp_assignments_to_dataframe(df: pd.DataFrame, exam_groups: List[Dict]
     if not assignment_map:
         # No assignments - mark all as unassigned
         df.loc[df['Schedule Status'] == 'SCHEDULED', 'Room Assignment Status'] = 'No rooms assigned by ILP'
+        # Add Status column even when no assignments
+        df['Status'] = df['Room Assignment Status']
         return df
     
     # Create mapping from (start_time, end_time) to assigned rooms

@@ -230,8 +230,21 @@ class Pipeline2:
             print(f"ILP Objective Value: {ilp_result['objective_value']:.2f}")
         print(f"ILP Solve Time: {ilp_result.get('solve_time', 0):.2f} seconds")
         
+        # If ILP is infeasible or has no assignments, fall back to greedy
+        assignment_map = ilp_result.get('assignment_map', {})
+        if status == 'INFEASIBLE' or not assignment_map:
+            print("Warning: ILP returned infeasible or no assignments. Falling back to greedy algorithm...")
+            return self._assign_rooms_greedy(df, room_search_results)
+        
         # Apply assignments to DataFrame
         df_with_rooms = apply_ilp_assignments_to_dataframe(df, exam_groups, ilp_result, rooms_df=rooms_df)
+        
+        # Ensure Status column exists (apply_ilp_assignments_to_dataframe should add it, but ensure it's there)
+        if 'Status' not in df_with_rooms.columns:
+            if 'Room Assignment Status' in df_with_rooms.columns:
+                df_with_rooms['Status'] = df_with_rooms['Room Assignment Status']
+            else:
+                df_with_rooms['Status'] = ''
         
         return df_with_rooms
     
@@ -401,8 +414,10 @@ class Pipeline2:
         if 'Room Assignment Status' in df_to_update.columns:
             # Fill Status column, using Room Assignment Status, or empty string if null/empty
             df_to_update['Status'] = df_to_update['Room Assignment Status'].fillna('').astype(str)
-            # Replace empty strings with a default message if needed
-            df_to_update.loc[df_to_update['Status'] == '', 'Status'] = 'Not processed'
+            # Replace empty strings - but only if Room Assignment Status is also empty
+            # Don't overwrite valid statuses
+            mask = (df_to_update['Status'] == '') & (df_to_update['Room Assignment Status'].fillna('') == '')
+            df_to_update.loc[mask, 'Status'] = 'Not processed'
         else:
             df_to_update['Status'] = 'Not processed'
         
