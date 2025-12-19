@@ -349,6 +349,23 @@ class Pipeline2:
         key_columns = ['Student ID', 'CRN', 'Scheduled Start']
         update_sheet_with_df_with_columns(file_name, sheet_name, df, key_columns)
     
+    def update_exam_information_sheet(self, df: pd.DataFrame,
+                                      file_name: str = "FA25 NEW MOCK",
+                                      sheet_name: str = "EXAM INFORMATION"):
+        """
+        Update EXAM INFORMATION sheet with room assignments.
+        
+        Args:
+            df: DataFrame with room assignments
+            file_name: Name of the Google Sheet
+            sheet_name: Name of the sheet tab
+        """
+        # Use key columns for updating (assuming Student ID and CRN are unique identifiers)
+        key_columns = ['Student ID', 'CRN', 'Scheduled Start']
+        print(f"Updating {sheet_name} sheet in {file_name} with room assignments...")
+        update_sheet_with_df_with_columns(file_name, sheet_name, df, key_columns)
+        print(f"Successfully updated {sheet_name} sheet")
+    
     def process_room_assignment(self, exam_data_file: str = None, 
                                 exam_data_df: pd.DataFrame = None) -> pd.DataFrame:
         """
@@ -357,14 +374,16 @@ class Pipeline2:
         2. Group exam timings
         3. Search rooms in LIV25
         4. Assign rooms
-        5. Update master sheet
+        5. Update "Exam Schedule" sheet in Google Sheets
+        6. Update "EXAM INFORMATION" sheet in Google Sheets
         
         Args:
             exam_data_file: Path to CSV file with exam data (optional)
             exam_data_df: DataFrame with exam data (optional)
         
         Returns:
-            DataFrame with room assignments
+            DataFrame with room assignments (includes columns: Assigned Room ID, 
+            Assigned Room Name, Assigned Room Location, Room Assignment Status)
         """
         # Load exam data
         if exam_data_df is not None:
@@ -392,5 +411,9 @@ class Pipeline2:
         # Update master sheet
         print("Updating master sheet with room assignments...")
         self.update_master_sheet_with_rooms(df_with_rooms)
+        
+        # Update EXAM INFORMATION sheet
+        print("Updating EXAM INFORMATION sheet with room assignments...")
+        self.update_exam_information_sheet(df_with_rooms)
         
         return df_with_rooms

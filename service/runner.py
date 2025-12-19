@@ -53,6 +53,12 @@ class Runner:
             result_with_rooms = self.p2.process_room_assignment(exam_data_df=result)
             result_with_rooms.to_csv("result_with_rooms.csv", index=False)
             print(f"Room assignment completed. Results saved to result_with_rooms.csv")
+            
+            # Note: process_room_assignment already updates both "Exam Schedule" and "EXAM INFORMATION" sheets
+            print("Google Sheets updated with room assignments:")
+            print("  - Exam Schedule sheet")
+            print("  - EXAM INFORMATION sheet")
+            
             return result_with_rooms
         
         return result
