@@ -332,6 +332,12 @@ class Pipeline2:
             if not assigned:
                 df.at[idx, 'Room Assignment Status'] = 'No available rooms with capacity'
         
+        # Add Status column (alias for Room Assignment Status)
+        if 'Room Assignment Status' in df.columns:
+            df['Status'] = df['Room Assignment Status']
+        else:
+            df['Status'] = ''
+        
         return df
     
     def update_master_sheet_with_rooms(self, df: pd.DataFrame, 
@@ -378,6 +384,12 @@ class Pipeline2:
             if col in df_to_update.columns:
                 df_to_update = df_to_update.drop(columns=[col])
         
+        # Ensure 'Status' column exists (alias for Room Assignment Status for clarity)
+        if 'Room Assignment Status' in df_to_update.columns:
+            df_to_update['Status'] = df_to_update['Room Assignment Status']
+        else:
+            df_to_update['Status'] = ''
+        
         # Use key columns for updating (assuming Student ID and CRN are unique identifiers)
         key_columns = ['Student ID', 'CRN', 'Scheduled Start']
         print(f"Updating {sheet_name} sheet in {file_name} with room assignments...")
@@ -385,6 +397,18 @@ class Pipeline2:
         print(f"  (Removed {removed_count} columns)")
         update_sheet_with_df_with_columns(file_name, sheet_name, df_to_update, key_columns)
         print(f"Successfully updated {sheet_name} sheet")
+        
+        # Report unassigned students
+        unassigned = df_to_update[~df_to_update['Room Assignment Status'].str.contains('Assigned', na=False)]
+        if len(unassigned) > 0:
+            print(f"\n⚠️  WARNING: {len(unassigned)} student(s) did not get room assignments:")
+            for idx, row in unassigned.iterrows():
+                student_id = row.get('Student ID', 'N/A')
+                crn = row.get('CRN', 'N/A')
+                status = row.get('Room Assignment Status', 'N/A')
+                print(f"  • Student {student_id} (CRN {crn}): {status}")
+        else:
+            print(f"\n✓ All students successfully assigned to rooms!")
     
     def process_room_assignment(self, exam_data_file: str = None, 
                                 exam_data_df: pd.DataFrame = None) -> pd.DataFrame:

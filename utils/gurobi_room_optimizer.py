@@ -465,5 +465,11 @@ def apply_ilp_assignments_to_dataframe(df: pd.DataFrame, exam_groups: List[Dict]
             # but handle gracefully
             df.at[idx, 'Room Assignment Status'] = 'All assigned rooms at capacity'
     
+    # Add Status column (alias for Room Assignment Status)
+    if 'Room Assignment Status' in df.columns:
+        df['Status'] = df['Room Assignment Status']
+    else:
+        df['Status'] = ''
+    
     return df
 
