@@ -360,10 +360,18 @@ class Pipeline2:
             file_name: Name of the Google Sheet
             sheet_name: Name of the sheet tab
         """
+        # Remove Assigned Room ID and Assigned Room Location columns before updating
+        df_to_update = df.copy()
+        columns_to_remove = ['Assigned Room ID', 'Assigned Room Location']
+        for col in columns_to_remove:
+            if col in df_to_update.columns:
+                df_to_update = df_to_update.drop(columns=[col])
+        
         # Use key columns for updating (assuming Student ID and CRN are unique identifiers)
         key_columns = ['Student ID', 'CRN', 'Scheduled Start']
         print(f"Updating {sheet_name} sheet in {file_name} with room assignments...")
-        update_sheet_with_df_with_columns(file_name, sheet_name, df, key_columns)
+        print(f"  (Removed columns: {', '.join(columns_to_remove)})")
+        update_sheet_with_df_with_columns(file_name, sheet_name, df_to_update, key_columns)
         print(f"Successfully updated {sheet_name} sheet")
     
     def process_room_assignment(self, exam_data_file: str = None, 
@@ -408,9 +416,13 @@ class Pipeline2:
         print("Assigning rooms to exams...")
         df_with_rooms = self.assign_rooms(df, room_search_results, exam_groups=exam_groups)
         
-        # Update master sheet
-        print("Updating master sheet with room assignments...")
-        self.update_master_sheet_with_rooms(df_with_rooms)
+        # Update master sheet (if it exists)
+        try:
+            print("Updating master sheet with room assignments...")
+            self.update_master_sheet_with_rooms(df_with_rooms)
+        except Exception as e:
+            print(f"Note: Could not update 'Exam Schedule' sheet: {e}")
+            print("Continuing with EXAM INFORMATION sheet update...")
         
         # Update EXAM INFORMATION sheet
         print("Updating EXAM INFORMATION sheet with room assignments...")
