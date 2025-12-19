@@ -427,45 +427,22 @@ class Pipeline2:
         removed_count = sum(1 for col in columns_to_remove if col in df.columns)
         print(f"  (Removed {removed_count} columns)")
         
-        # Update sheet with special handling to ensure Status is always populated
+        # Update sheet - ALWAYS clear and write fresh data (no merging/appending)
         client = _get_client()
         sheet = client.open(file_name).worksheet(sheet_name)
         
-        # Read existing sheet
-        existing_df = pd.DataFrame(sheet.get_all_records())
+        print(f"  Clearing sheet and writing fresh data (replacing all existing data)...")
         
-        # If sheet is empty, write the new df entirely
-        if existing_df.empty:
-            sheet.clear()
-            # Convert DataFrame to list of lists, handling NaN values
-            values = []
-            for row in df_to_update.values.tolist():
-                values.append([str(v) if pd.notna(v) else '' for v in row])
-            sheet.update([df_to_update.columns.tolist()] + values)
-        else:
-            # Merge logic – treat key columns as a composite primary key
-            merged_df = existing_df.set_index(key_columns).combine_first(
-                df_to_update.set_index(key_columns)
-            ).reset_index()
-            
-            # CRITICAL FIX: Ensure Status column is always populated from Room Assignment Status
-            # Even if Status exists in existing data, update it from Room Assignment Status
-            if 'Room Assignment Status' in merged_df.columns:
-                # Update Status from Room Assignment Status for all rows
-                merged_df['Status'] = merged_df['Room Assignment Status'].fillna('').astype(str)
-                # Replace empty strings
-                merged_df.loc[merged_df['Status'] == '', 'Status'] = 'Not processed'
-            elif 'Status' not in merged_df.columns:
-                merged_df['Status'] = 'Not processed'
-            
-            # Convert DataFrame to list of lists, handling NaN values
-            values = []
-            for row in merged_df.values.tolist():
-                values.append([str(v) if pd.notna(v) else '' for v in row])
-            
-            # Update entire sheet
-            sheet.clear()
-            sheet.update([merged_df.columns.tolist()] + values)
+        # Always clear the sheet first to remove all old data
+        sheet.clear()
+        
+        # Convert DataFrame to list of lists, handling NaN values and datetime
+        values = []
+        for row in df_to_update.values.tolist():
+            values.append([str(v) if pd.notna(v) else '' for v in row])
+        
+        # Write fresh data to sheet (replaces everything)
+        sheet.update([df_to_update.columns.tolist()] + values)
         
         print(f"Successfully updated {sheet_name} sheet")
         
