@@ -360,9 +360,20 @@ class Pipeline2:
             file_name: Name of the Google Sheet
             sheet_name: Name of the sheet tab
         """
-        # Remove Assigned Room ID and Assigned Room Location columns before updating
+        # Remove unwanted columns before updating
         df_to_update = df.copy()
-        columns_to_remove = ['Assigned Room ID', 'Assigned Room Location']
+        columns_to_remove = [
+            'Assigned Room ID', 
+            'Assigned Room Location',
+            '5:00 pm the day AFTER the exam',
+            '5:00 pm the day BEFORE the exam',
+            '5:00 pm the day of the exam',
+            '5:00 pm up to a week AFTER the exam',
+            '8:00 am the day AFTER the exam',
+            '8:00 am the day BEFORE the exam',
+            '8:00 am the day of the exam',
+            '8:00 am up to a week AFTER the exam'
+        ]
         for col in columns_to_remove:
             if col in df_to_update.columns:
                 df_to_update = df_to_update.drop(columns=[col])
@@ -370,7 +381,8 @@ class Pipeline2:
         # Use key columns for updating (assuming Student ID and CRN are unique identifiers)
         key_columns = ['Student ID', 'CRN', 'Scheduled Start']
         print(f"Updating {sheet_name} sheet in {file_name} with room assignments...")
-        print(f"  (Removed columns: {', '.join(columns_to_remove)})")
+        removed_count = sum(1 for col in columns_to_remove if col in df.columns)
+        print(f"  (Removed {removed_count} columns)")
         update_sheet_with_df_with_columns(file_name, sheet_name, df_to_update, key_columns)
         print(f"Successfully updated {sheet_name} sheet")
     
