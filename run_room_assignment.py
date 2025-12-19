@@ -95,8 +95,8 @@ def main():
         print(f'Unique rooms used: {unique_rooms}')
         print(f'Sample assignments:')
         for idx, row in assigned.head(5).iterrows():
-            student_id = row['Student ID']
-            room_name = row[room_name_col]
+            student_id = str(row['Student ID'])
+            room_name = str(row[room_name_col])
             print(f'  • Student {student_id:6s} → {room_name}')
         print()
     
@@ -108,10 +108,10 @@ def main():
         print()
         print('Students who did NOT get room assignments:')
         for idx, row in unassigned.iterrows():
-            student_id = row['Student ID']
-            crn = row['CRN']
-            status = row['Room Assignment Status']
-            schedule_status = row.get('Schedule Status', 'N/A')
+            student_id = str(row['Student ID'])
+            crn = str(row['CRN'])
+            status = str(row['Room Assignment Status'])
+            schedule_status = str(row.get('Schedule Status', 'N/A'))
             print(f'  • Student {student_id:6s} | CRN {crn:4s} | Schedule: {schedule_status:20s} | Reason: {status}')
         print()
         print('='*70)
